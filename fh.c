@@ -8,25 +8,14 @@ typedef long int32;
 typedef int int32;
 #endif
 
-void assert_eq(int32 a, int32 b) {
+static void assert_eq(int32 a, int32 b) {
 	if (a != b) {
 		fprintf(stderr, "assertion failed: %ld != %ld\n", (long)a, (long)b);
 		exit(1);
 	}
 }
 
-int32 factorial(int32 i) {
-	int32 result = 1, x = 2;
-	if (i <= 1) {
-		return 1;
-	}
-	for (; x <= i; ++x) {
-		result *= x;
-	}
-	return result;
-}
-
-int32 choose(int32 a, int32 b) {
+static int32 choose(int32 a, int32 b) {
 	int32 result = a, x = a-1;
 	if (a < b) {
 		return 0;
@@ -34,7 +23,7 @@ int32 choose(int32 a, int32 b) {
 	if (a == b || b == 0) {
 		return 1;
 	}
-	for (; x > (a-b); --x) {
+	for (; x > a - b; --x) {
 		result *= x;
 	}
 	for (x = 2; x <= b; ++x) {
@@ -53,11 +42,11 @@ typedef struct PiecePositions {
 /* (32 choose 4) * 28 */
 #define POSITION_END 1006880
 
-int32 idx_to_pos(int32 idx) {
+static int32 idx_to_pos(int32 idx) {
 	return idx * 2 + idx / 4 % 2;
 }
 
-int32 decompose_next(int32 *k, int *i) {
+static int32 decompose_next(int32 *k, int *i) {
 	int32 c, next_c = 0, n = *k - 1, result;
 	do {
 		c = next_c;
@@ -70,7 +59,7 @@ int32 decompose_next(int32 *k, int *i) {
 	return result;
 }
 
-PiecePositions decompose(int32 i) {
+static PiecePositions decompose(int32 i) {
 	PiecePositions result;
 	int32 k = 4, fox_idx;
 	fox_idx = i % 28;
@@ -92,7 +81,7 @@ PiecePositions decompose(int32 i) {
 	return result;
 }
 
-int32 recompose(PiecePositions pos) {
+static int32 recompose(PiecePositions pos) {
 	int32 result = 0, fox_idx = 0, i = 1, j;
 	while (i < 4) {
 		j = i;
@@ -122,7 +111,7 @@ int32 recompose(PiecePositions pos) {
 	return result;
 }
 
-void print_board(int32 i) {
+static void print_board(int32 i) {
 	PiecePositions p;
 	int32 idx = 56;
 	p = decompose(i);
@@ -149,15 +138,15 @@ void print_board(int32 i) {
 	}
 }
 
-int current_player_fox(const PiecePositions *p) {
+static int current_player_fox(const PiecePositions *p) {
 	return (p->fox + p->hounds[0] + p->hounds[1] + p->hounds[2] + p->hounds[3]) % 2;
 }
 
-int occupied_by_hound(const PiecePositions *p, int32 idx) {
+static int occupied_by_hound(const PiecePositions *p, int32 idx) {
 	return p->hounds[0] == idx || p->hounds[1] == idx || p->hounds[2] == idx || p->hounds[3] == idx;
 }
 
-int32 valid_moves(PiecePositions *p, PiecePositions moves[]) {
+static int32 valid_moves(PiecePositions *p, PiecePositions moves[]) {
 	int32 count = 0, i;
 	if (current_player_fox(p)) {
 		if (p->fox < 56 && p->fox % 8 < 7 && !occupied_by_hound(p, p->fox + 9)) {
@@ -194,7 +183,7 @@ int32 valid_moves(PiecePositions *p, PiecePositions moves[]) {
 #define FOX_WON 1
 #define HOUNDS_WON 2
 
-int game_over(PiecePositions *p) {
+static int game_over(PiecePositions *p) {
 	if (p->fox > 56) {
 		return FOX_WON;
 	}
@@ -213,7 +202,7 @@ typedef struct Node {
 	int32 eval;
 } Node;
 
-int32 sign(int32 val) {
+static int32 sign(int32 val) {
 	if (val == 0) {
 		return 0;
 	}
@@ -223,7 +212,7 @@ int32 sign(int32 val) {
 	return -1;
 }
 
-Node *create_reverse_tree(void) {
+static Node *create_reverse_tree(void) {
 	Node val;
 	Node *tree;
 	int32 i = 0, remaining = 0, step = 1, moves_length, j, next;
@@ -291,12 +280,17 @@ Node *create_reverse_tree(void) {
 	return tree;
 }
 
-void test(void) {
+static void test(void) {
 	assert_eq(choose(20, 5), 15504);
 }
 
 int main(void) {
+	Node *tree;
 	test();
-	create_reverse_tree();
+	tree = create_reverse_tree();
+	if (!tree) {
+		return EXIT_FAILURE;
+	}
+	free(tree);
 	return EXIT_SUCCESS;
 }
